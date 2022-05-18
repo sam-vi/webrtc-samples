@@ -70,6 +70,47 @@ async function start() {
   }
 }
 
+const DEFAULT_CONFIG = {
+  iceServers: [
+    {
+      urls: [
+        'stun:turn2.l.google.com',
+      ],
+    },
+  ],
+  iceCandidatePoolSize: 10,
+};
+
+const NTP_CONFIG_URL = `https://networktraversal.googleapis.com/v1alpha/iceconfig?key=AIzaSyCCkISWotZGISiHcm55NQH5n3tHxKP_3dY`;
+const NTP_TIMEOUT_MS = 3000;
+
+async function loadIceConfiguration(template) {
+  template = template || 'local';
+  console.log(`Fetch config from ${NTP_CONFIG_URL} for template ${template}`);
+
+  let configuration = DEFAULT_CONFIG;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), NTP_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(NTP_CONFIG_URL, {
+      method: 'POST',
+      body: JSON.stringify({ice_config_preference: template}),
+      signal: controller.signal,
+    });
+    if (response.ok) {
+      configuration = await response.json();
+      console.log(`Fetched ICE config: ${JSON.stringify(configuration)}`);
+    } else {
+      console.log(`Fetch failed: ${response.status}`);
+    }
+    clearTimeout(timeoutId);
+  } catch (err) {
+    console.log(`Fetch failed: ${err.message}`);
+  }
+  return configuration;
+}
+
 async function call() {
   callButton.disabled = true;
   hangupButton.disabled = false;
@@ -83,7 +124,8 @@ async function call() {
   if (audioTracks.length > 0) {
     console.log(`Using audio device: ${audioTracks[0].label}`);
   }
-  const configuration = {};
+  const template = new URLSearchParams(document.location.search).get('t');
+  const configuration = await loadIceConfiguration(template);
   console.log('RTCPeerConnection configuration:', configuration);
   pc1 = new RTCPeerConnection(configuration);
   console.log('Created local peer connection object pc1');
