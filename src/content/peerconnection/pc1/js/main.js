@@ -113,37 +113,42 @@ const DEFAULT_CONFIG = {
 const OPEN_RELAY_SERVERS = new Map([
   ['turn-udp',
     {
-      urls: ["turn:openrelay.metered.ca:80"],
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },],
+      urls: ['turn:openrelay.metered.ca:80'],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
   ['turn-ssl',
     {
-      urls: ["turn:openrelay.metered.ca:443"],
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },],
+      urls: ['turn:openrelay.metered.ca:443'],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
   ['turn-tcp',
     {
-      urls: ["turn:openrelay.metered.ca:80?transport=tcp"],
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },],
+      urls: ['turn:openrelay.metered.ca:80?transport=tcp'],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
   ['turn-ssl-tcp',
     {
-      urls: ["turn:openrelay.metered.ca:443?transport=tcp"],
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },],
+      urls: ['turn:openrelay.metered.ca:443?transport=tcp'],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
 ]);
 
 const OPEN_RELAY_CONFIG = {
   iceServers: [
     {
-      urls: "stun:openrelay.metered.ca:80",
+      urls: 'stun:openrelay.metered.ca:80',
     },
   ],
-  iceTransportPolicy: "relay",
+  blockStatus: 'NOT_BLOCKED',
+  iceTransportPolicy: 'relay',
 };
 
 const NTP_CONFIG_URL = `https://networktraversal.googleapis.com/v1alpha/iceconfig?key=AIzaSyCCkISWotZGISiHcm55NQH5n3tHxKP_3dY`;
@@ -152,11 +157,10 @@ const NTP_TIMEOUT_MS = 3000;
 async function loadIceConfiguration(template) {
   if (template.startsWith('openrelay')) {
     const subtemplate = template.replace('openrelay-', '');
-    let config = Object.assign({}, OPEN_RELAY_CONFIG);
+    const config = Object.assign({}, OPEN_RELAY_CONFIG);
     if (OPEN_RELAY_SERVERS.has(subtemplate)) {
       config.iceServers.push(OPEN_RELAY_SERVERS.get(subtemplate));
     }
-
     console.log(`Returning openrelay config for template ${template}`);
     return config;
   }
