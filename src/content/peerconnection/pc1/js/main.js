@@ -56,11 +56,22 @@ function getOtherPc(pc) {
   return (pc === pc1) ? pc2 : pc1;
 }
 
+const USER_MEDIA_CONSTRAINTS = new Map([
+  ['', {audio: true, video: true}],
+  ['a', {audio: true}],
+  ['v', {video: true}],
+]);
+
 async function start() {
   console.log('Requesting local stream');
   startButton.disabled = true;
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+    const request = new URLSearchParams(document.location.search).get('umc');
+    let constraint = USER_MEDIA_CONSTRAINTS.get('');
+    if (USER_MEDIA_CONSTRAINTS.has(request)) {
+      constraint = USER_MEDIA_CONSTRAINTS.get(request);
+    }
+    const stream = await navigator.mediaDevices.getUserMedia(constraint);
     console.log('Received local stream');
     localVideo.srcObject = stream;
     localStream = stream;
@@ -81,10 +92,79 @@ const DEFAULT_CONFIG = {
   iceCandidatePoolSize: 10,
 };
 
+/*
+{
+  "lifetimeDuration":"86400s",
+  "iceServers": [
+    {
+      "urls":["stun:localhost"]
+    },
+    {
+      "urls":["turn:localhost?transport=udp","turn:localhost?transport=tcp"],
+      "username":"...",
+      "credential":"..."
+    }
+  ],
+  "blockStatus":"NOT_BLOCKED",
+  "iceTransportPolicy":"relay"
+}
+*/
+
+const OPEN_RELAY_SERVERS = new Map([
+  ['turn-udp',
+    {
+      urls: ['turn:openrelay.metered.ca:80'],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
+  ['turn-ssl',
+    {
+      urls: ['turn:openrelay.metered.ca:443'],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
+  ['turn-tcp',
+    {
+      urls: ['turn:openrelay.metered.ca:80?transport=tcp'],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
+  ['turn-ssl-tcp',
+    {
+      urls: ['turn:openrelay.metered.ca:443?transport=tcp'],
+      username: 'openrelayproject',
+      credential: 'openrelayproject',
+    },
+  ],
+]);
+
+const OPEN_RELAY_CONFIG = {
+  iceServers: [
+    {
+      urls: 'stun:openrelay.metered.ca:80',
+    },
+  ],
+  blockStatus: 'NOT_BLOCKED',
+  iceTransportPolicy: 'relay',
+};
+
 const NTP_CONFIG_URL = `https://networktraversal.googleapis.com/v1alpha/iceconfig?key=AIzaSyCCkISWotZGISiHcm55NQH5n3tHxKP_3dY`;
 const NTP_TIMEOUT_MS = 3000;
 
 async function loadIceConfiguration(template) {
+  if (template && template.startsWith('openrelay')) {
+    const subtemplate = template.replace('openrelay-', '');
+    const config = Object.assign({}, OPEN_RELAY_CONFIG);
+    if (OPEN_RELAY_SERVERS.has(subtemplate)) {
+      config.iceServers.push(OPEN_RELAY_SERVERS.get(subtemplate));
+    }
+    console.log(`Returning openrelay config for template ${template}`);
+    return config;
+  }
+
   template = template || 'local';
   console.log(`Fetch config from ${NTP_CONFIG_URL} for template ${template}`);
 
