@@ -155,7 +155,7 @@ const NTP_CONFIG_URL = `https://networktraversal.googleapis.com/v1alpha/iceconfi
 const NTP_TIMEOUT_MS = 3000;
 
 async function loadIceConfiguration(template) {
-  if (template.startsWith('openrelay')) {
+  if (template && template.startsWith('openrelay')) {
     const subtemplate = template.replace('openrelay-', '');
     const config = Object.assign({}, OPEN_RELAY_CONFIG);
     if (OPEN_RELAY_SERVERS.has(subtemplate)) {
