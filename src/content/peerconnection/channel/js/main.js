@@ -15,8 +15,18 @@ hangupButton.disabled = true;
 const localVideo = document.getElementById('localVideo');
 const remoteVideo = document.getElementById('remoteVideo');
 
+const candidatepairaddedCell = document.getElementById('candidatepairadded');
+const candidatepairreportCell = document.getElementById('candidatepairreport');
+const candidatepairswitchCell = document.getElementById('candidatepairswitch');
+const candidatepairdestroyedCell = document.getElementById('candidatepairdestroyed');
+const icepingproposalCell = document.getElementById('icepingproposal');
+const iceswitchproposalCell = document.getElementById('iceswitchproposal');
+const icepruneproposalCell = document.getElementById('icepruneproposal');
+
+let rtc_configuration;
 let pc;
 let localStream;
+let tab_id = Math.floor(Math.random() * 90) + 11;
 
 const signaling = new BroadcastChannel('webrtc');
 signaling.onmessage = e => {
@@ -26,6 +36,7 @@ signaling.onmessage = e => {
   }
   switch (e.data.type) {
     case 'offer':
+      document.title = `${tab_id}<--  ${document.title}`;
       handleOffer(e.data);
       break;
     case 'answer':
@@ -40,6 +51,7 @@ signaling.onmessage = e => {
         console.log('already in call, ignoring');
         return;
       }
+      document.title = `${tab_id}-->  ${document.title}`;
       makeCall();
       break;
     case 'bye':
@@ -54,19 +66,19 @@ signaling.onmessage = e => {
 };
 
 startButton.onclick = async () => {
-  localStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+  localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
   localVideo.srcObject = localStream;
 
 
   startButton.disabled = true;
   hangupButton.disabled = false;
 
-  signaling.postMessage({type: 'ready'});
+  signaling.postMessage({ type: 'ready' });
 };
 
 hangupButton.onclick = async () => {
   hangup();
-  signaling.postMessage({type: 'bye'});
+  signaling.postMessage({ type: 'bye' });
 };
 
 async function hangup() {
@@ -81,7 +93,52 @@ async function hangup() {
 };
 
 function createPeerConnection() {
-  pc = new RTCPeerConnection();
+  if (typeof RTCIceController === 'function') {
+    let candidatepairaddedCtr = 0;
+    let candidatepairreportCtr = 0;
+    let candidatepairswitchCtr = 0;
+    let candidatepairdestroyedCtr = 0;
+    let icepingproposalCtr = 0;
+    let iceswitchproposalCtr = 0;
+    let icepruneproposalCtr = 0;
+    console.log(`Attaching an RTCIceController to ${tab_id}`);
+    let ic = new RTCIceController();
+    ic.addEventListener('candidatepairadded', e => {
+      candidatepairaddedCell.innerHTML = ++candidatepairaddedCtr;
+      console.log(`RTCIC ${tab_id}==> Pair added: [${e.debugStr}]`);
+    });
+    ic.addEventListener('candidatepairreport', e => {
+      candidatepairreportCell.innerHTML = ++candidatepairreportCtr;
+      console.log(`RTCIC ${tab_id}==> Pair report: [${e.debugStr}]`);
+    });
+    ic.addEventListener('candidatepairswitch', e => {
+      candidatepairswitchCell.innerHTML = ++candidatepairswitchCtr;
+      console.log(`RTCIC ${tab_id}==> Pair switch: [${e.debugStr}]`);
+    });
+    ic.addEventListener('candidatepairdestroyed', e => {
+      candidatepairdestroyedCell.innerHTML = ++candidatepairdestroyedCtr;
+      console.log(`RTCIC ${tab_id}==> Pair destroyed: [${e.debugStr}]`);
+    });
+    ic.addEventListener('icepingproposal', e => {
+      icepingproposalCell.innerHTML = ++icepingproposalCtr;
+      console.log(`RTCIC ${tab_id}==> Ping request: [${e.debugStr}]`);
+      // e.preventDefault();
+    });
+    ic.addEventListener('iceswitchproposal', e => {
+      iceswitchproposalCell.innerHTML = ++iceswitchproposalCtr;
+      console.log(`RTCIC ${tab_id}==> Switch request: [${e.debugStr}]`);
+      // e.preventDefault();
+    });
+    ic.addEventListener('icepruneproposal', e => {
+      icepruneproposalCell.innerHTML = ++icepruneproposalCtr;
+      console.log(`RTCIC ${tab_id}==> Prune request: [${e.debugStr}]`);
+      // e.preventDefault();
+    });
+    rtc_configuration = { iceController: ic };
+  } else {
+    console.log('RTCIceController unavailable');
+  }
+  pc = new RTCPeerConnection(rtc_configuration);
   pc.onicecandidate = e => {
     const message = {
       type: 'candidate',
@@ -102,7 +159,7 @@ async function makeCall() {
   await createPeerConnection();
 
   const offer = await pc.createOffer();
-  signaling.postMessage({type: 'offer', sdp: offer.sdp});
+  signaling.postMessage({ type: 'offer', sdp: offer.sdp });
   await pc.setLocalDescription(offer);
 }
 
@@ -115,7 +172,7 @@ async function handleOffer(offer) {
   await pc.setRemoteDescription(offer);
 
   const answer = await pc.createAnswer();
-  signaling.postMessage({type: 'answer', sdp: answer.sdp});
+  signaling.postMessage({ type: 'answer', sdp: answer.sdp });
   await pc.setLocalDescription(answer);
 }
 

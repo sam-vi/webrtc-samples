@@ -7,6 +7,7 @@
  *  tree.
 -->
 <html>
+
 <head>
 
     <meta charset="utf-8">
@@ -24,47 +25,72 @@
 
     <link rel="icon" sizes="192x192" href="../../../images/webrtc-icon-192x192.png">
     <link href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href="../../../css/main.css"/>
-    <link rel="stylesheet" href="css/main.css"/>
+    <link rel="stylesheet" href="../../../css/main.css" />
+    <link rel="stylesheet" href="css/main.css" />
 
 </head>
 
 <body>
 
-<div id="container">
-    <h1><a href="//webrtc.github.io/samples/" title="WebRTC samples homepage">WebRTC samples</a>
-        <span>Peer connection</span></h1>
+    <div id="container">
+        <h1><a href="//webrtc.github.io/samples/" title="WebRTC samples homepage">WebRTC samples</a>
+            <span>Peer connection</span>
+        </h1>
 
-    <p>This sample shows how to setup a connection between two peers using
-        <a href="https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection">RTCPeerConnection</a>.
-    </p>
+        <p>This sample shows how to setup a connection between two peers using
+            <a href="https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection">RTCPeerConnection</a>.
+        </p>
 
-    <video id="localVideo" playsinline autoplay muted></video>
-    <video id="remoteVideo" playsinline autoplay></video>
+        <video id="localVideo" playsinline autoplay muted></video>
+        <video id="remoteVideo" playsinline autoplay></video>
 
-    <div class="box">
-        <button id="startButton">Start</button>
-        <button id="callButton">Call</button>
-        <button id="hangupButton">Hang Up</button>
+        <div class="box">
+            <button id="startButton">Start</button>
+            <button id="callButton">Call</button>
+            <button id="hangupButton">Hang Up</button>
+        </div>
+
+        <p>View the console to see logging. The <code>MediaStream</code> object <code>localStream</code>, and the
+            <code>RTCPeerConnection</code>
+            objects <code>pc1</code> and <code>pc2</code> are in global scope, so you can inspect them in the console as
+            well.</p>
+
+        <table style="width:100%">
+            <tr>
+                <th>Added</th>
+                <th>Report</th>
+                <th>Switched</th>
+                <th>Destroyed</th>
+                <th>Ping Request</th>
+                <th>Switch Request</th>
+                <th>Prune Request</th>
+            </tr>
+            <tr>
+                <td style="text-align:center" id="1candidatepairadded">0</td>
+                <td style="text-align:center" id="1candidatepairreport">0</td>
+                <td style="text-align:center" id="1candidatepairswitch">0</td>
+                <td style="text-align:center" id="1candidatepairdestroyed">0</td>
+                <td style="text-align:center" id="1icepingproposal">0</td>
+                <td style="text-align:center" id="1iceswitchproposal">0</td>
+                <td style="text-align:center" id="1icepruneproposal">0</td>
+            </tr>
+            <tr>
+                <td style="text-align:center" id="2candidatepairadded">0</td>
+                <td style="text-align:center" id="2candidatepairreport">0</td>
+                <td style="text-align:center" id="2candidatepairswitch">0</td>
+                <td style="text-align:center" id="2candidatepairdestroyed">0</td>
+                <td style="text-align:center" id="2icepingproposal">0</td>
+                <td style="text-align:center" id="2iceswitchproposal">0</td>
+                <td style="text-align:center" id="2icepruneproposal">0</td>
+            </tr>
+        </table>
+
     </div>
 
-    <p>View the console to see logging. The <code>MediaStream</code> object <code>localStream</code>, and the <code>RTCPeerConnection</code>
-        objects <code>pc1</code> and <code>pc2</code> are in global scope, so you can inspect them in the console as
-        well.</p>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script src="js/main.js" async></script>
 
-    <p>For more information about RTCPeerConnection, see <a href="http://www.html5rocks.com/en/tutorials/webrtc/basics/"
-                                                            title="HTML5 Rocks article about WebRTC by Sam Dutton">Getting
-        Started With WebRTC</a>.</p>
-
-
-    <a href="https://github.com/webrtc/samples/tree/gh-pages/src/content/peerconnection/pc1"
-       title="View source for this page on GitHub" id="viewSource">View source on GitHub</a>
-
-</div>
-
-<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-<script src="js/main.js" async></script>
-
-<script src="../../../js/lib/ga.js"></script>
+    <script src="../../../js/lib/ga.js"></script>
 </body>
+
 </html>

@@ -21,11 +21,27 @@ let startTime;
 const localVideo = document.getElementById('localVideo');
 const remoteVideo = document.getElementById('remoteVideo');
 
-localVideo.addEventListener('loadedmetadata', function() {
+const f_candidatepairaddedCell = document.getElementById('1candidatepairadded');
+const f_candidatepairreportCell = document.getElementById('1candidatepairreport');
+const f_candidatepairswitchCell = document.getElementById('1candidatepairswitch');
+const f_candidatepairdestroyedCell = document.getElementById('1candidatepairdestroyed');
+const f_icepingproposalCell = document.getElementById('1icepingproposal');
+const f_iceswitchproposalCell = document.getElementById('1iceswitchproposal');
+const f_icepruneproposalCell = document.getElementById('1icepruneproposal');
+
+const s_candidatepairaddedCell = document.getElementById('2candidatepairadded');
+const s_candidatepairreportCell = document.getElementById('2candidatepairreport');
+const s_candidatepairswitchCell = document.getElementById('2candidatepairswitch');
+const s_candidatepairdestroyedCell = document.getElementById('2candidatepairdestroyed');
+const s_icepingproposalCell = document.getElementById('2icepingproposal');
+const s_iceswitchproposalCell = document.getElementById('2iceswitchproposal');
+const s_icepruneproposalCell = document.getElementById('2icepruneproposal');
+
+localVideo.addEventListener('loadedmetadata', function () {
   console.log(`Local video videoWidth: ${this.videoWidth}px,  videoHeight: ${this.videoHeight}px`);
 });
 
-remoteVideo.addEventListener('loadedmetadata', function() {
+remoteVideo.addEventListener('loadedmetadata', function () {
   console.log(`Remote video videoWidth: ${this.videoWidth}px,  videoHeight: ${this.videoHeight}px`);
 });
 
@@ -40,6 +56,7 @@ remoteVideo.addEventListener('resize', () => {
   }
 });
 
+let rtc_configuration;
 let localStream;
 let pc1;
 let pc2;
@@ -57,9 +74,9 @@ function getOtherPc(pc) {
 }
 
 const USER_MEDIA_CONSTRAINTS = new Map([
-  ['', {audio: true, video: true}],
-  ['a', {audio: true}],
-  ['v', {video: true}],
+  ['', { audio: true, video: true }],
+  ['a', { audio: true }],
+  ['v', { video: true }],
 ]);
 
 async function start() {
@@ -175,7 +192,7 @@ async function loadIceConfiguration(template) {
   try {
     const response = await fetch(NTP_CONFIG_URL, {
       method: 'POST',
-      body: JSON.stringify({ice_config_preference: template}),
+      body: JSON.stringify({ ice_config_preference: template }),
       signal: controller.signal,
     });
     if (response.ok) {
@@ -192,6 +209,22 @@ async function loadIceConfiguration(template) {
 }
 
 async function call() {
+  let f_candidatepairaddedCtr = 0;
+  let f_candidatepairreportCtr = 0;
+  let f_candidatepairswitchCtr = 0;
+  let f_candidatepairdestroyedCtr = 0;
+  let f_icepingproposalCtr = 0;
+  let f_iceswitchproposalCtr = 0;
+  let f_icepruneproposalCtr = 0;
+
+  let s_candidatepairaddedCtr = 0;
+  let s_candidatepairreportCtr = 0;
+  let s_candidatepairswitchCtr = 0;
+  let s_candidatepairdestroyedCtr = 0;
+  let s_icepingproposalCtr = 0;
+  let s_iceswitchproposalCtr = 0;
+  let s_icepruneproposalCtr = 0;
+
   callButton.disabled = true;
   hangupButton.disabled = false;
   console.log('Starting call');
@@ -205,13 +238,94 @@ async function call() {
     console.log(`Using audio device: ${audioTracks[0].label}`);
   }
   const template = new URLSearchParams(document.location.search).get('t');
-  const configuration = await loadIceConfiguration(template);
-  console.log('RTCPeerConnection configuration:', configuration);
-  pc1 = new RTCPeerConnection(configuration);
+  rtc_configuration = await loadIceConfiguration(template);
+  // const configuration = await loadIceConfiguration(template);
+  console.log('RTCPeerConnection configuration:', rtc_configuration);
+
+  if (typeof RTCIceController === 'function') {
+    console.log('Attaching an RTCIceController to #1');
+    let ic1 = new RTCIceController();
+    ic1.addEventListener('candidatepairadded', e => {
+      f_candidatepairaddedCell.innerHTML = ++f_candidatepairaddedCtr;
+      console.log(`RTCIC #1==> Pair added: [${e.debugStr}]`);
+    });
+    ic1.addEventListener('candidatepairreport', e => {
+      f_candidatepairreportCell.innerHTML = ++f_candidatepairreportCtr;
+      console.log(`RTCIC #1==> Pair report: [${e.debugStr}]`);
+    });
+    ic1.addEventListener('candidatepairswitch', e => {
+      f_candidatepairswitchCell.innerHTML = ++f_candidatepairswitchCtr;
+      console.log(`RTCIC #1==> Pair switch: [${e.debugStr}]`);
+    });
+    ic1.addEventListener('candidatepairdestroyed', e => {
+      f_candidatepairdestroyedCell.innerHTML = ++f_candidatepairdestroyedCtr;
+      console.log(`RTCIC #1==> Pair destroyed: [${e.debugStr}]`);
+    });
+    ic1.addEventListener('icepingproposal', e => {
+      f_icepingproposalCell.innerHTML = ++f_icepingproposalCtr;
+      console.log(`RTCIC #1==> Ping request: [${e.debugStr}]`);
+      // e.preventDefault();
+    });
+    ic1.addEventListener('iceswitchproposal', e => {
+      f_iceswitchproposalCell.innerHTML = ++f_iceswitchproposalCtr;
+      console.log(`RTCIC #1==> Switch request: [${e.debugStr}]`);
+      // e.preventDefault();
+    });
+    ic1.addEventListener('icepruneproposal', e => {
+      f_icepruneproposalCell.innerHTML = ++f_icepruneproposalCtr;
+      console.log(`RTCIC #1==> Prune request: [${e.debugStr}]`);
+      e.preventDefault();
+    });
+    rtc_configuration.iceController = ic1;
+  } else {
+    console.log('RTCIceController unavailable');
+  }
+  pc1 = new RTCPeerConnection(rtc_configuration);
   console.log('Created local peer connection object pc1');
+
   pc1.addEventListener('icecandidate', e => onIceCandidate(pc1, e));
-  pc2 = new RTCPeerConnection(configuration);
+
+  if (typeof RTCIceController === 'function') {
+    console.log('Attaching an RTCIceController to #2');
+    let ic2 = new RTCIceController();
+    ic2.addEventListener('candidatepairadded', e => {
+      s_candidatepairaddedCell.innerHTML = ++s_candidatepairaddedCtr;
+      console.log(`RTCIC #2==> Pair added: [${e.debugStr}]`);
+    });
+    ic2.addEventListener('candidatepairreport', e => {
+      s_candidatepairreportCell.innerHTML = ++s_candidatepairreportCtr;
+      console.log(`RTCIC #2==> Pair report: [${e.debugStr}]`);
+    });
+    ic2.addEventListener('candidatepairswitch', e => {
+      s_candidatepairswitchCell.innerHTML = ++s_candidatepairswitchCtr;
+      console.log(`RTCIC #2==> Pair switch: [${e.debugStr}]`);
+    });
+    ic2.addEventListener('candidatepairdestroyed', e => {
+      s_candidatepairdestroyedCell.innerHTML = ++s_candidatepairdestroyedCtr;
+      console.log(`RTCIC #2==> Pair destroyed: [${e.debugStr}]`);
+    });
+    ic2.addEventListener('icepingproposal', e => {
+      s_icepingproposalCell.innerHTML = ++s_icepingproposalCtr;
+      console.log(`RTCIC #2==> Ping request: [${e.debugStr}]`);
+      // e.preventDefault();
+    });
+    ic2.addEventListener('iceswitchproposal', e => {
+      s_iceswitchproposalCell.innerHTML = ++s_iceswitchproposalCtr;
+      console.log(`RTCIC #2==> Switch request: [${e.debugStr}]`);
+      // e.preventDefault();
+    });
+    ic2.addEventListener('icepruneproposal', e => {
+      s_icepruneproposalCell.innerHTML = ++s_icepruneproposalCtr;
+      console.log(`RTCIC #2==> Prune request: [${e.debugStr}]`);
+      e.preventDefault();
+    });
+    rtc_configuration.iceController = ic2;
+  } else {
+    console.log('RTCIceController unavailable');
+  }
+  pc2 = new RTCPeerConnection(rtc_configuration);
   console.log('Created remote peer connection object pc2');
+
   pc2.addEventListener('icecandidate', e => onIceCandidate(pc2, e));
   pc1.addEventListener('iceconnectionstatechange', e => onIceStateChange(pc1, e));
   pc2.addEventListener('iceconnectionstatechange', e => onIceStateChange(pc2, e));
